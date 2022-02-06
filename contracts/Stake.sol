@@ -23,6 +23,14 @@ contract Stake {
         return owners[_nonce];
     }
 
+    function getMessageSigner(uint256 amount, uint256 nonce, bytes memory signature) public view returns (address) {
+        // this recreates the message that was signed on the client
+        bytes32 message = prefixed(keccak256(abi.encodePacked(msg.sender, amount, nonce, this)));
+
+        address signer = recoverSigner(message, signature);
+        return signer;
+    }
+
     function claimPayment(uint256 amount, uint256 nonce, bytes memory signature) external {
         // require(!usedNonces[nonce]);
         // usedNonces[nonce] = true;
