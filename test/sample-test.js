@@ -14,7 +14,7 @@ describe("Stake Contract", () => {
   });
 
   it("Should stake the correct amount", async () => {
-    // const [signer] = await ethers.getSigners();
+    const [signer] = await ethers.getSigners();
     // const stakeWithSigner = stake.connect(signer);
     const amount = ethers.utils.parseUnits("0.001", 18);
 
@@ -25,5 +25,6 @@ describe("Stake Contract", () => {
     await stakeTx.wait();
 
     expect(await stake.getBalance()).to.equal(amount);
+    expect(await stake.getStakedBalanceOf(signer.address)).to.equal(amount);
   });
 });

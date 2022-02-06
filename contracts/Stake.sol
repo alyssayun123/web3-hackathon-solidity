@@ -7,16 +7,26 @@ contract Stake {
     // owners for nonce
     mapping(uint256 => address) owners;
 
+    // total staked token for addresses
+    mapping(address => uint256) staked;
+
     constructor() payable {}
 
     /** stake _amount to the contract */
     function stake(uint256 _amount, uint256 _nonce) payable public {
         require(msg.value == _amount);
+        require(_amount >= 0, "staking negative value");
+        
         owners[_nonce] = msg.sender;
+        staked[msg.sender] += _amount;
     }
 
     function getBalance() public view returns (uint256) {
         return address(this).balance;
+    }
+
+    function getStakedBalanceOf(address _owner) public view returns (uint256) {
+        return staked[_owner];
     }
 
     function getNonceOwner(uint256 _nonce) public view returns (address) {
@@ -38,10 +48,12 @@ contract Stake {
         // this recreates the message that was signed on the client
         bytes32 message = prefixed(keccak256(abi.encodePacked(msg.sender, amount, nonce, this)));
 
-        require(recoverSigner(message, signature) == owners[nonce]);
+        require(recoverSigner(message, signature) == owners[nonce], "Invalid nonce");
+        require(staked[owners[nonce]] >= amount, "insufficient amount");
 
+        staked[owners[nonce]] -= amount;
         // prevent repeat attack
-        owners[nonce] = address(0);
+        // owners[nonce] = address(0);
 
         payable(msg.sender).transfer(amount);
     }

@@ -27,8 +27,6 @@ module.exports = {
     mumbai: {
       url: process.env.MUMBAI_NODE_URL,
       accounts: [process.env.PRIVATE_KEY, process.env.RECIPIENT_PRIVATE_KEY],
-      gasPrice: 20000000000,
-      gas: 6000000,
     },
   },
 };

@@ -7,7 +7,7 @@ const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
 const contract = require("../artifacts/contracts/Stake.sol/Stake.json");
-const contractAddress = "0x7115c8Aca94E7dBAEb8DadB57b81757d3d1851ee";
+const contractAddress = "0x2EeE6A06807F7210e8d08b8C6Ef8DC50927Ec077";
 const provider = new hre.ethers.providers.AlchemyProvider("maticmum");
 const Contract = new hre.ethers.Contract(
   contractAddress,
@@ -26,7 +26,7 @@ function getMessageHash(recipient, amount, nonce, _contractAddress) {
 
 async function main() {
   const [signer, recipient] = await ethers.getSigners();
-  const amount = ethers.utils.parseUnits("0.001", 18);
+  const amount = ethers.utils.parseUnits("0.0005", 18);
   const nonce = 1;
 
   const hash = getMessageHash(
@@ -37,32 +37,38 @@ async function main() {
   );
 
   const sign = await signer.signMessage(hash);
-  let recovered = ethers.utils.verifyMessage(hash, sign);
+  // let recovered = ethers.utils.verifyMessage(hash, sign);
 
-  console.log(`signer address`, signer.address);
-  console.log(`recovered`, recovered);
+  // console.log(`signer address`, signer.address);
+  // console.log(`recovered`, recovered);
 
   const recipientSigner = Contract.connect(recipient);
-  const messageSigner = await recipientSigner.getMessageSigner(
-    amount,
-    nonce,
-    sign
+  // const messageSigner = await recipientSigner.getMessageSigner(
+  //   amount,
+  //   nonce,
+  //   sign
+  // );
+  // console.log(`messageSigner`, messageSigner);
+  // const nonceOwner = await recipientSigner.getNonceOwner(nonce);
+  // console.log(`nonceOwner`, nonceOwner);
+
+  const stakedBalance = await recipientSigner.getStakedBalanceOf(
+    signer.address
   );
-  console.log(`messageSigner`, messageSigner);
+  console.log(`stakedBalance`, stakedBalance);
 
-  // signer.signMessage(hash);
-  // const recipientSigner = Contract.connect(recipient);
-  // console.log(hash);
-
-  // await recipientSigner.claimPayment(amount, nonce, hash, {
-  //   gasLimit: 21000,
-  // });
+  await recipientSigner.claimPayment(amount, nonce, sign);
 
   // const balance = await Contract.getBalance();
-  // console.log(balance);
+  // console.log(`balance`, balance);
 
-  // const nonceOwner = await Contract.getNonceOwner(nonce);
-  // console.log(nonceOwner);
+  const newStakedBalance = await recipientSigner.getStakedBalanceOf(
+    signer.address
+  );
+  console.log(`newStakedBalance`, newStakedBalance);
+
+  const newNonceOwner = await Contract.getNonceOwner(nonce);
+  console.log(`newNonceOwner`, newNonceOwner);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
