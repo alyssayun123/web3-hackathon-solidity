@@ -94,8 +94,33 @@ describe("Stake Contract", () => {
 
     it("Should modify the nonce owner", async () => {
       const newNonceOwner = await stake.getNonceOwner(nonce);
-      console.log(newNonceOwner);
       expect(newNonceOwner).to.equal(ethers.constants.AddressZero);
+    });
+
+    it("Should not be able to retrieve more than staked", async () => {
+      const [signer, recipient] = await ethers.getSigners();
+      const hash = getMessageHash(
+        recipient.address,
+        amount,
+        nonce,
+        stake.address
+      );
+
+      const sign = await signer.signMessage(hash);
+
+      const recipientSigner = stake.connect(recipient);
+
+      // at this point signer has 0 staked
+      try {
+        const claimPaymentTx = await recipientSigner.claimPayment(
+          amount,
+          nonce,
+          sign
+        );
+        await claimPaymentTx.wait();
+      } catch (e) {
+        expect(e.message).to.have.string("ProviderError");
+      }
     });
   });
 });
