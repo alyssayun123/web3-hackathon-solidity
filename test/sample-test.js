@@ -30,11 +30,17 @@ describe("Stake Contract", () => {
       expect(await stake.getStakedBalanceOf(signer.address)).to.equal(amount);
     });
 
-    // it("Should throw if amount is incorect", async () => {
-    //   const amount = ethers.utils.parseUnits("0.001", 18);
+    it("Should throw if amount is incorect", async () => {
+      const amount = ethers.utils.parseUnits("0.001", 18);
 
-    //   expect(async () => await stake.stake(amount, nonce)).to.throw();
-    // });
+      try {
+        // call the stake function without msg.value attached
+        const stakeTx = await stake.stake(amount, nonce);
+        await stakeTx.wait();
+      } catch (e) {
+        expect(e.message).to.have.string("ProviderError");
+      }
+    });
 
     it("Should change the nonce owner", async () => {
       const [signer] = await ethers.getSigners();
