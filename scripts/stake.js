@@ -7,7 +7,7 @@ const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
 const contract = require("../artifacts/contracts/Stake.sol/Stake.json");
-const contractAddress = "0x2EeE6A06807F7210e8d08b8C6Ef8DC50927Ec077";
+const contractAddress = "0xCC186f8c31Ad9e07Fbf9bd60cf3EF8361d58Bb44";
 const provider = new hre.ethers.providers.AlchemyProvider("maticmum");
 const Contract = new hre.ethers.Contract(
   contractAddress,
@@ -26,7 +26,7 @@ function getMessageHash(recipient, amount, nonce, _contractAddress) {
 
 async function main() {
   const [signer, recipient] = await ethers.getSigners();
-  const amount = ethers.utils.parseUnits("0.0005", 18);
+  const amount = ethers.utils.parseUnits("0.0001", 18);
   const nonce = 1;
 
   const hash = getMessageHash(
@@ -49,8 +49,8 @@ async function main() {
   //   sign
   // );
   // console.log(`messageSigner`, messageSigner);
-  // const nonceOwner = await recipientSigner.getNonceOwner(nonce);
-  // console.log(`nonceOwner`, nonceOwner);
+  const nonceOwner = await recipientSigner.getNonceOwner(nonce);
+  console.log(`nonceOwner`, nonceOwner);
 
   const stakedBalance = await recipientSigner.getStakedBalanceOf(
     signer.address

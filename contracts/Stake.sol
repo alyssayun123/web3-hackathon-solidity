@@ -53,7 +53,7 @@ contract Stake {
 
         staked[owners[nonce]] -= amount;
         // prevent repeat attack
-        // owners[nonce] = address(0);
+        owners[nonce] = address(0x0);
 
         payable(msg.sender).transfer(amount);
     }
