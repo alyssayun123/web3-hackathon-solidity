@@ -5,6 +5,7 @@
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
 const { ethers } = require("hardhat");
+const crypto = require("crypto");
 
 const contract = require("../artifacts/contracts/Stake.sol/Stake.json");
 const contractAddress = "0xCC186f8c31Ad9e07Fbf9bd60cf3EF8361d58Bb44";
@@ -14,6 +15,10 @@ const Contract = new hre.ethers.Contract(
   contract.abi,
   provider
 );
+
+const getRandomUint256 = () => {
+  return ethers.BigNumber.from(crypto.randomBytes(32)).toString();
+};
 
 function getMessageHash(recipient, amount, nonce, _contractAddress) {
   var hash = ethers.utils.solidityKeccak256(
@@ -27,7 +32,7 @@ function getMessageHash(recipient, amount, nonce, _contractAddress) {
 async function main() {
   const [signer, recipient] = await ethers.getSigners();
   const amount = ethers.utils.parseUnits("0.0001", 18);
-  const nonce = 1;
+  const nonce = getRandomUint256();
 
   const hash = getMessageHash(
     recipient.address,
@@ -36,38 +41,40 @@ async function main() {
     contractAddress
   );
 
+  /** step1: sign the transaction and stake with signer */
   const sign = await signer.signMessage(hash);
-  // let recovered = ethers.utils.verifyMessage(hash, sign);
+  const stakeTx = await Contract.connect(signer).stake(amount, nonce, {
+    value: amount,
+  });
+  await stakeTx.wait();
 
-  // console.log(`signer address`, signer.address);
-  // console.log(`recovered`, recovered);
-
-  const recipientSigner = Contract.connect(recipient);
-  // const messageSigner = await recipientSigner.getMessageSigner(
-  //   amount,
-  //   nonce,
-  //   sign
-  // );
-  // console.log(`messageSigner`, messageSigner);
-  const nonceOwner = await recipientSigner.getNonceOwner(nonce);
+  /** step2: verify nonce owner is signer */
+  const nonceOwner = await Contract.getNonceOwner(nonce);
+  console.log("step2: verify nonce owner is signer");
   console.log(`nonceOwner`, nonceOwner);
 
+  /** step3: verify recipient can claim the correct amount staked */
+  const recipientSigner = Contract.connect(recipient);
   const stakedBalance = await recipientSigner.getStakedBalanceOf(
     signer.address
   );
+  console.log("step3: verify recipient can claim the amount staked");
   console.log(`stakedBalance`, stakedBalance);
 
-  await recipientSigner.claimPayment(amount, nonce, sign);
+  /** step4: claim payment */
+  const paymentTx = await recipientSigner.claimPayment(amount, nonce, sign);
+  await paymentTx.wait();
 
-  // const balance = await Contract.getBalance();
-  // console.log(`balance`, balance);
-
+  /** step5: new staked balance should be 0 */
   const newStakedBalance = await recipientSigner.getStakedBalanceOf(
     signer.address
   );
+  console.log("step5: new staked balance should be 0");
   console.log(`newStakedBalance`, newStakedBalance);
 
+  /** step6: new nonce owner should be null address */
   const newNonceOwner = await Contract.getNonceOwner(nonce);
+  console.log("step6: new nonce owner should be null address");
   console.log(`newNonceOwner`, newNonceOwner);
 }
 

@@ -9,6 +9,7 @@
     "hardhat": "^2.8.3"
   },
   "dependencies": {
+    "crypto": "^1.0.1",
     "dotenv": "^16.0.0"
   }
 }
